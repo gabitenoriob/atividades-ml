@@ -11,6 +11,8 @@ no servidor.
 
 import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
+##importando o normalizador MinMaxScaler para colocar todas as colunas na mesma escala
+from sklearn.preprocessing import MinMaxScaler
 import requests
 
 print('\n - Lendo o arquivo com o dataset sobre diabetes')
@@ -86,19 +88,29 @@ feature_cols = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness',
 X = data[feature_cols]
 y = data.Outcome
 
-# Ciando o modelo preditivo para a base trabalhada
+#normalizando os dados de treino com MinMaxScaler, colocando todas as colunas na escala de 0 a 1
+scaler = MinMaxScaler()
+#aprendendo os valores mínimo e máximo de cada coluna e aplicando a normalização nos dados de treino
+X_scaled = scaler.fit_transform(X)
+#convertendo o resultado de volta para DataFrame, recolocando os nomes das colunas
+X_scaled = pd.DataFrame(X_scaled, columns=feature_cols)
+
+# Criando o modelo preditivo para a base trabalhada
 print(' - Criando modelo preditivo')
 neigh = KNeighborsClassifier(n_neighbors=3)
-neigh.fit(X, y)
+neigh.fit(X_scaled, y)
 
 #realizando previsões com o arquivo de
 print(' - Aplicando modelo e enviando para o servidor')
 data_app = pd.read_csv('diabetes_app.csv')
 data_app = data_app[feature_cols]
-y_pred = neigh.predict(data_app)
+#aplicando a mesma normalização do treino nos dados de aplicação, sem reaprender os valores mínimo e máximo
+X_app_scaled = scaler.transform(data_app)
+#Mudando data_app por X_app_scaled e realizando as previsões com os dados de aplicação normalizados
+y_pred = neigh.predict(X_app_scaled)
 
 # Enviando previsões realizadas com o modelo para o servidor
-#URL = "https://aydanomachado.com/mlclass/01_Preprocessing.php"
+URL = "https://aydanomachado.com/mlclass/01_Preprocessing.php"
 
 #TODO Substituir pela sua chave aqui
 DEV_KEY = "grupo central"
